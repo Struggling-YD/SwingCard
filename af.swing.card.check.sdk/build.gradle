@@ -1,0 +1,55 @@
+apply plugin: 'com.android.library'
+
+import static java.util.Calendar.*
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion '23.0.1'
+
+    defaultConfig {
+        minSdkVersion 10
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+def String getDateTime() {
+    def now = new Date()
+    def dateTime = now.updated(year: now[YEAR], date: now[DATE], month: now[MONTH], hour: now[HOUR], minutes: now[MINUTE]).format("yyyy_MM_dd_HH_mm")
+    return dateTime;
+}
+
+def SDK_BASENAME = "AF_SwingCardCheck_SDK_";
+def SDK_VERSION = "_V1.0";
+def SDK_NAME = SDK_BASENAME + getDateTime() + SDK_VERSION;
+def sdkDestinationPath = "build";
+def zipFile = file('build/intermediates/bundles/release/classes.jar')
+task deleteBuild(type: Delete) {
+    delete sdkDestinationPath + SDK_NAME + ".jar"
+}
+task makeJar(type: Jar) {
+    from zipTree(zipFile)
+    from fileTree(dir: 'src/main', includes: ['assets/**'])//将assets目录打入jar包
+    baseName = SDK_NAME
+    destinationDir = file(sdkDestinationPath)
+}
+makeJar.dependsOn(deleteBuild, build)
+dependencies {
+    provided fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    testCompile 'junit:junit:4.12'
+    compile files('libs/okio-1.10.0.jar')
+    compile files('libs/okhttp-3.3.0.jar')
+    compile files('libs/gson-2.8.0.jar')
+}
